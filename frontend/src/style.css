@@ -1,0 +1,43 @@
+.chat-card {
+  height: 75vh;
+}
+
+.chat-box {
+  height: calc(75vh - 120px);
+  overflow-y: auto;
+  background: #f8f9fa;
+}
+
+.message-row {
+  display: flex;
+  margin-bottom: 12px;
+}
+
+.message-bubble {
+  max-width: 78%;
+  padding: 12px 14px;
+  border-radius: 14px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.user-bubble {
+  background: #0d6efd;
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+.bot-bubble {
+  background: white;
+  border: 1px solid #dee2e6;
+  color: #212529;
+  border-bottom-left-radius: 4px;
+}
+
+.message-content {
+  line-height: 1.5;
+}
+
+.card {
+  border: 0;
+}

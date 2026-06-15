@@ -1,0 +1,317 @@
+import { useEffect, useRef, useState } from "react";
+import {
+  uploadDocument,
+  askQuestion,
+  getDocuments,
+  deleteDocuments,
+} from "./api";
+
+function App() {
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [documents, setDocuments] = useState([]);
+  const [question, setQuestion] = useState("");
+  const [messages, setMessages] = useState([
+    {
+      role: "bot",
+      content:
+        "Xin chào! Hãy upload tài liệu PDF/TXT bên trái, sau đó đặt câu hỏi về tài liệu.",
+    },
+  ]);
+  const [uploading, setUploading] = useState(false);
+  const [asking, setAsking] = useState(false);
+  const [status, setStatus] = useState("");
+  const chatEndRef = useRef(null);
+
+  async function loadDocuments() {
+    try {
+      const data = await getDocuments();
+      setDocuments(data.documents || []);
+    } catch (error) {
+      console.error(error);
+      setStatus("Không kết nối được backend. Hãy chạy FastAPI trước.");
+    }
+  }
+
+  useEffect(() => {
+    loadDocuments();
+  }, []);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  async function handleUpload() {
+    if (!selectedFile) {
+      setStatus("Vui lòng chọn file PDF hoặc TXT.");
+      return;
+    }
+
+    setUploading(true);
+    setStatus("Đang upload và index tài liệu...");
+
+    try {
+      const data = await uploadDocument(selectedFile);
+
+      setStatus(`Upload thành công: ${data.filename}`);
+      setSelectedFile(null);
+      await loadDocuments();
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "bot",
+          content: `Đã index tài liệu "${data.filename}" vào ChromaDB bằng LlamaIndex.`,
+        },
+      ]);
+    } catch (error) {
+      console.error(error);
+      const detail =
+        error.response?.data?.detail ||
+        error.response?.data ||
+        error.message ||
+        "Upload thất bại";
+      setStatus(`Lỗi upload: ${JSON.stringify(detail)}`);
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function handleAsk(e) {
+    e.preventDefault();
+
+    const cleanQuestion = question.trim();
+
+    if (!cleanQuestion) return;
+
+    setMessages((prev) => [
+      ...prev,
+      {
+        role: "user",
+        content: cleanQuestion,
+      },
+    ]);
+
+    setQuestion("");
+    setAsking(true);
+
+    try {
+      const data = await askQuestion(cleanQuestion);
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "bot",
+          content: data.answer || "Không có câu trả lời.",
+        },
+      ]);
+    } catch (error) {
+      console.error(error);
+      const detail =
+        error.response?.data?.detail ||
+        error.response?.data ||
+        error.message ||
+        "Chat thất bại";
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "bot",
+          content: `Lỗi: ${JSON.stringify(detail)}`,
+        },
+      ]);
+    } finally {
+      setAsking(false);
+    }
+  }
+
+  async function handleClear() {
+    const ok = window.confirm("Xóa toàn bộ tài liệu và ChromaDB?");
+    if (!ok) return;
+
+    try {
+      await deleteDocuments();
+      await loadDocuments();
+      setMessages([
+        {
+          role: "bot",
+          content: "Đã xóa tài liệu và vector database.",
+        },
+      ]);
+      setStatus("Đã xóa dữ liệu.");
+    } catch (error) {
+      console.error(error);
+      setStatus("Xóa thất bại.");
+    }
+  }
+
+  return (
+    <div className="min-vh-100 bg-light">
+      <nav className="navbar navbar-dark bg-primary shadow-sm">
+        <div className="container">
+          <span className="navbar-brand fw-bold">
+            <i className="bi bi-robot me-2"></i>
+            Smart Document RAG
+          </span>
+          <span className="badge text-bg-light">
+            LlamaIndex + ChromaDB + Ollama
+          </span>
+        </div>
+      </nav>
+
+      <main className="container py-4">
+        {status && (
+          <div className="alert alert-info alert-dismissible fade show">
+            {status}
+            <button
+              type="button"
+              className="btn-close"
+              onClick={() => setStatus("")}
+            ></button>
+          </div>
+        )}
+
+        <div className="row g-4">
+          <div className="col-lg-4">
+            <div className="card shadow-sm mb-4">
+              <div className="card-header bg-white fw-bold">
+                <i className="bi bi-file-earmark-arrow-up me-2"></i>
+                Upload tài liệu
+              </div>
+
+              <div className="card-body">
+                <input
+                  className="form-control mb-3"
+                  type="file"
+                  accept=".pdf,.txt"
+                  onChange={(e) => setSelectedFile(e.target.files[0])}
+                />
+
+                <button
+                  className="btn btn-primary w-100"
+                  onClick={handleUpload}
+                  disabled={uploading}
+                >
+                  {uploading ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm me-2"></span>
+                      Đang xử lý...
+                    </>
+                  ) : (
+                    <>
+                      <i className="bi bi-cloud-upload me-2"></i>
+                      Upload & Index
+                    </>
+                  )}
+                </button>
+
+                <div className="small text-muted mt-3">
+                  Hỗ trợ PDF và TXT. Khi upload, backend sẽ đọc tài liệu,
+                  tạo embedding bằng Ollama và lưu vector vào ChromaDB.
+                </div>
+              </div>
+            </div>
+
+            <div className="card shadow-sm">
+              <div className="card-header bg-white d-flex justify-content-between align-items-center">
+                <span className="fw-bold">
+                  <i className="bi bi-folder2-open me-2"></i>
+                  Tài liệu
+                </span>
+                <button className="btn btn-sm btn-outline-secondary" onClick={loadDocuments}>
+                  <i className="bi bi-arrow-clockwise"></i>
+                </button>
+              </div>
+
+              <div className="card-body">
+                {documents.length === 0 ? (
+                  <div className="text-muted small">Chưa có tài liệu.</div>
+                ) : (
+                  <ul className="list-group mb-3">
+                    {documents.map((doc) => (
+                      <li
+                        className="list-group-item d-flex justify-content-between align-items-center"
+                        key={doc.path}
+                      >
+                        <span className="text-truncate">
+                          <i className="bi bi-file-earmark-text me-2"></i>
+                          {doc.filename}
+                        </span>
+                        <span className="badge text-bg-secondary">
+                          {Math.round(doc.size / 1024)} KB
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                <button className="btn btn-outline-danger w-100" onClick={handleClear}>
+                  <i className="bi bi-trash me-2"></i>
+                  Xóa tài liệu + ChromaDB
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="col-lg-8">
+            <div className="card shadow-sm chat-card">
+              <div className="card-header bg-white fw-bold">
+                <i className="bi bi-chat-dots me-2"></i>
+                Hỏi đáp tài liệu
+              </div>
+
+              <div className="card-body chat-box">
+                {messages.map((message, index) => (
+                  <div
+                    key={index}
+                    className={`message-row ${
+                      message.role === "user" ? "justify-content-end" : "justify-content-start"
+                    }`}
+                  >
+                    <div
+                      className={`message-bubble ${
+                        message.role === "user" ? "user-bubble" : "bot-bubble"
+                      }`}
+                    >
+                      <div className="fw-bold mb-1">
+                        {message.role === "user" ? "Bạn" : "Bot"}
+                      </div>
+                      <div className="message-content">{message.content}</div>
+                    </div>
+                  </div>
+                ))}
+
+                {asking && (
+                  <div className="message-row justify-content-start">
+                    <div className="message-bubble bot-bubble">
+                      <span className="spinner-border spinner-border-sm me-2"></span>
+                      Đang suy nghĩ...
+                    </div>
+                  </div>
+                )}
+
+                <div ref={chatEndRef}></div>
+              </div>
+
+              <div className="card-footer bg-white">
+                <form onSubmit={handleAsk} className="d-flex gap-2">
+                  <input
+                    className="form-control"
+                    value={question}
+                    onChange={(e) => setQuestion(e.target.value)}
+                    placeholder="Nhập câu hỏi về tài liệu..."
+                    disabled={asking}
+                  />
+                  <button className="btn btn-success px-4" disabled={asking}>
+                    <i className="bi bi-send"></i>
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+export default App;
