@@ -1,0 +1,13 @@
+### Health check
+GET http://127.0.0.1:8000/
+
+### List documents
+GET http://127.0.0.1:8000/documents
+
+### Chat
+POST http://127.0.0.1:8000/chat
+Content-Type: application/json
+
+{
+  "question": "Tài liệu nói về gì?"
+}

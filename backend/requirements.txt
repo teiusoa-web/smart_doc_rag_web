@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+python-multipart
+pypdf
+chromadb
+llama-index
+llama-index-vector-stores-chroma
+llama-index-embeddings-ollama
+llama-index-llms-ollama
