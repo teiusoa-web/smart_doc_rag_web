@@ -1,68 +1,186 @@
 # Smart Document RAG Web
 
-Đồ án: Thiết kế Website hỏi đáp tài liệu thông minh bằng Python + LlamaIndex + ChromaDB + Ollama.
+Hệ thống hỏi đáp tài liệu thông minh sử dụng RAG (Retrieval-Augmented Generation) với LlamaIndex, ChromaDB và Ollama.
 
-## Stack
+## Tính năng
 
-- Backend: FastAPI
-- RAG Framework: LlamaIndex
-- Vector Database: ChromaDB
-- Local LLM: Ollama
-- Embedding: nomic-embed-text
-- Chat model: tinyllama hoặc llama3.2
+- Upload tài liệu PDF và TXT
+- Tự động tạo vector embedding
+- Lưu vector bằng ChromaDB
+- Hỏi đáp dựa trên nội dung tài liệu
+- Hiển thị nguồn tham khảo
+- Lưu lịch sử chat trên trình duyệt
+- Giao diện React + Bootstrap
+- Backend FastAPI
+- LLM chạy local bằng Ollama
+
+---
+
+## Công nghệ sử dụng
+
+### Frontend
+
+- React
+- Vite
+- Bootstrap 5
+- Axios
+
+### Backend
+
+- FastAPI
+- Uvicorn
+
+### AI & RAG
+
+- LlamaIndex
+- ChromaDB
+- Ollama
+- Llama 3.2
+- nomic-embed-text
+
+### Xử lý tài liệu
+
+- pdfplumber
+- RapidOCR (fallback OCR)
+
+---
+
+## Kiến trúc hệ thống
+
+```text
+User
+ │
+ ▼
+Frontend (React + Bootstrap)
+ │
+ ▼
+FastAPI
+ │
+ ├── Upload Document
+ │
+ ├── LlamaIndex
+ │
+ ├── ChromaDB
+ │
+ └── Ollama
+      ├── nomic-embed-text
+      └── llama3.2
+```
+
+---
+
+## Cấu trúc thư mục
+
+```text
+smart_doc_rag_web
+│
+├── backend
+│   ├── app.py
+│   ├── config.py
+│   │
+│   ├── routes
+│   │   ├── upload.py
+│   │   ├── chat.py
+│   │   └── documents.py
+│   │
+│   └── services
+│       ├── document_service.py
+│       └── rag_service.py
+│
+├── frontend
+│   ├── src
+│   │   ├── App.jsx
+│   │   ├── api.js
+│   │   └── style.css
+│   │
+│   ├── package.json
+│   └── vite.config.js
+│
+├── data
+│   ├── docs
+│   └── chroma_db
+│
+└── README.md
+```
+
+---
 
 ## Cài đặt
 
-```powershell
-py -3.12 -m venv .venv
-Set-ExecutionPolicy Bypass -Scope Process -Force
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install -r backend\requirements.txt
+### Clone project
+
+```bash
+git clone https://github.com/teiusoa-web/smart_doc_rag_web.git
+cd smart_doc_rag_web
 ```
 
-## Tải model Ollama
+### Tạo môi trường ảo
+
+```powershell
+python -m venv .venv
+```
+
+Kích hoạt:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+### Cài thư viện backend
+
+```powershell
+pip install -r backend/requirements.txt
+```
+
+### Cài Ollama
+
+Tải và cài đặt Ollama:
+
+:contentReference[oaicite:0]{index=0}
+
+### Tải model
+
+Embedding:
 
 ```powershell
 ollama pull nomic-embed-text
-ollama pull tinyllama
 ```
 
-Máy mạnh hơn có thể dùng:
+LLM:
 
 ```powershell
 ollama pull llama3.2
 ```
 
-Sau đó sửa `backend/config.py`.
+Kiểm tra:
 
-## Chạy backend
+```powershell
+ollama list
+```
+
+---
+
+## Chạy Backend
 
 ```powershell
 python -m uvicorn backend.app:app --reload
 ```
 
-Mở:
+Swagger:
 
 ```text
 http://127.0.0.1:8000/docs
 ```
 
-## API
+---
 
-- `GET /`
-- `POST /upload`
-- `POST /chat`
-- `GET /documents`
-- `DELETE /documents`
-
-## Chạy frontend Vite
-
-Mở terminal mới:
+## Chạy Frontend
 
 ```powershell
 cd frontend
+
 npm install
+
 npm run dev
 ```
 
@@ -72,14 +190,107 @@ Mở:
 http://127.0.0.1:5173
 ```
 
-Frontend sẽ gọi backend tại:
+---
+
+## Luồng hoạt động
+
+### Upload tài liệu
 
 ```text
-http://127.0.0.1:8000
+PDF / TXT
+    │
+    ▼
+Document Reader
+    │
+    ▼
+Chunking
+    │
+    ▼
+nomic-embed-text
+    │
+    ▼
+ChromaDB
 ```
 
-Nếu cần đổi URL backend, tạo file `frontend/.env`:
+### Hỏi đáp
 
 ```text
-VITE_API_BASE_URL=http://127.0.0.1:8000
+Question
+    │
+    ▼
+Retriever
+    │
+    ▼
+ChromaDB
+    │
+    ▼
+Relevant Context
+    │
+    ▼
+Llama 3.2
+    │
+    ▼
+Answer
 ```
+
+---
+
+## API
+
+### Upload tài liệu
+
+```http
+POST /upload
+```
+
+### Hỏi đáp
+
+```http
+POST /chat
+```
+
+Request:
+
+```json
+{
+  "question": "Tóm tắt nội dung tài liệu"
+}
+```
+
+Response:
+
+```json
+{
+  "question": "...",
+  "answer": "...",
+  "sources": [...]
+}
+```
+
+### Danh sách tài liệu
+
+```http
+GET /documents
+```
+
+### Xóa dữ liệu
+
+```http
+DELETE /documents
+```
+
+---
+
+## Demo
+
+1. Upload PDF hoặc TXT
+2. Hệ thống đọc và index tài liệu
+3. Người dùng đặt câu hỏi
+4. Retriever tìm nội dung liên quan trong ChromaDB
+5. Llama 3.2 sinh câu trả lời dựa trên tài liệu
+6. Hiển thị nguồn tham khảo
+
+---
+
+
+GitHub: :contentReference[oaicite:1]{index=1}
