@@ -1,4 +1,14 @@
-# Smart Document RAG Web
+# Document RAG Web
+
+![Python](https://img.shields.io/badge/Python-3.12-blue)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
+![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)
+![Vite](https://img.shields.io/badge/Vite-5-646CFF?logo=vite&logoColor=white)
+![LlamaIndex](https://img.shields.io/badge/LlamaIndex-RAG-orange)
+![ChromaDB](https://img.shields.io/badge/ChromaDB-VectorDB-purple)
+![Ollama](https://img.shields.io/badge/Ollama-LocalLLM-black)
+![Llama3.2](https://img.shields.io/badge/Llama-3.2-green)
+![License](https://img.shields.io/badge/License-MIT-yellow)
 
 Hệ thống hỏi đáp tài liệu thông minh sử dụng RAG (Retrieval-Augmented Generation) với LlamaIndex, ChromaDB và Ollama.
 
@@ -291,6 +301,3 @@ DELETE /documents
 6. Hiển thị nguồn tham khảo
 
 ---
-
-
-GitHub: :contentReference[oaicite:1]{index=1}
