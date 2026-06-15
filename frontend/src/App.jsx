@@ -10,13 +10,25 @@ function App() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [documents, setDocuments] = useState([]);
   const [question, setQuestion] = useState("");
-  const [messages, setMessages] = useState([
-    {
-      role: "bot",
-      content:
-        "Xin chào! Hãy upload tài liệu PDF/TXT bên trái, sau đó đặt câu hỏi về tài liệu.",
-    },
-  ]);
+  const [messages, setMessages] = useState(() => {
+    const saved = localStorage.getItem("chat_history");
+
+    if (saved) {
+      return JSON.parse(saved);
+    }
+
+    return [
+      {
+        role: "bot",
+        content:
+          "Xin chào! Hãy upload tài liệu PDF/TXT bên trái, sau đó đặt câu hỏi về tài liệu.",
+      },
+    ];
+  });
+  useEffect(() => {
+    localStorage.setItem("chat_history", JSON.stringify(messages));
+  }, [messages]);
+
   const [uploading, setUploading] = useState(false);
   const [asking, setAsking] = useState(false);
   const [status, setStatus] = useState("");
@@ -77,52 +89,55 @@ function App() {
   }
 
   async function handleAsk(e) {
-    e.preventDefault();
+  e.preventDefault();
 
-    const cleanQuestion = question.trim();
+  const cleanQuestion = question.trim();
 
-    if (!cleanQuestion) return;
+  if (!cleanQuestion) return;
+
+  // Tin nhắn user
+  setMessages((prev) => [
+    ...prev,
+    {
+      role: "user",
+      content: cleanQuestion,
+    },
+  ]);
+
+  setQuestion("");
+  setAsking(true);
+
+  try {
+    const data = await askQuestion(cleanQuestion);
 
     setMessages((prev) => [
       ...prev,
       {
-        role: "user",
-        content: cleanQuestion,
+        role: "bot",
+        content: data.answer || "Không có câu trả lời.",
+        sources: data.sources || [],
       },
     ]);
+  } catch (error) {
+    console.error(error);
 
-    setQuestion("");
-    setAsking(true);
+    const detail =
+      error.response?.data?.detail ||
+      error.response?.data ||
+      error.message ||
+      "Chat thất bại";
 
-    try {
-      const data = await askQuestion(cleanQuestion);
-
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "bot",
-          content: data.answer || "Không có câu trả lời.",
-        },
-      ]);
-    } catch (error) {
-      console.error(error);
-      const detail =
-        error.response?.data?.detail ||
-        error.response?.data ||
-        error.message ||
-        "Chat thất bại";
-
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "bot",
-          content: `Lỗi: ${JSON.stringify(detail)}`,
-        },
-      ]);
-    } finally {
-      setAsking(false);
-    }
+    setMessages((prev) => [
+      ...prev,
+      {
+        role: "bot",
+        content: `Lỗi: ${JSON.stringify(detail)}`,
+      },
+    ]);
+  } finally {
+    setAsking(false);
   }
+}
 
   async function handleClear() {
     const ok = window.confirm("Xóa toàn bộ tài liệu và ChromaDB?");
@@ -131,6 +146,7 @@ function App() {
     try {
       await deleteDocuments();
       await loadDocuments();
+      localStorage.removeItem("chat_history");
       setMessages([
         {
           role: "bot",
@@ -149,8 +165,7 @@ function App() {
       <nav className="navbar navbar-dark bg-primary shadow-sm">
         <div className="container">
           <span className="navbar-brand fw-bold">
-            <i className="bi bi-robot me-2"></i>
-            Smart Document RAG
+            Document RAG
           </span>
           <span className="badge text-bg-light">
             LlamaIndex + ChromaDB + Ollama
@@ -263,19 +278,30 @@ function App() {
                 {messages.map((message, index) => (
                   <div
                     key={index}
-                    className={`message-row ${
-                      message.role === "user" ? "justify-content-end" : "justify-content-start"
-                    }`}
+                    className={`message-row ${message.role === "user" ? "justify-content-end" : "justify-content-start"
+                      }`}
                   >
                     <div
-                      className={`message-bubble ${
-                        message.role === "user" ? "user-bubble" : "bot-bubble"
-                      }`}
+                      className={`message-bubble ${message.role === "user" ? "user-bubble" : "bot-bubble"
+                        }`}
                     >
                       <div className="fw-bold mb-1">
                         {message.role === "user" ? "Bạn" : "Bot"}
                       </div>
-                      <div className="message-content">{message.content}</div>
+                      <div className="message-content">{message.content}
+                        {message.sources && message.sources.length > 0 && (
+                          <div className="mt-3">
+                            <div className="fw-bold small mb-2">Nguồn tham khảo:</div>
+
+                            {message.sources.map((source) => (
+                              <div className="source-box small mb-2" key={source.index}>
+                                <div className="fw-bold">Nguồn {source.index}</div>
+                                <div>{source.preview}</div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}

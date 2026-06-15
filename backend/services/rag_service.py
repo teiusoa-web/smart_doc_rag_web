@@ -183,44 +183,49 @@ def ask_document(question: str):
 
     nodes = retriever.retrieve(question)
 
-    print("\n" + "=" * 60)
-    print("QUESTION:", question)
-    print("RETRIEVED NODES:", len(nodes))
-
-    for i, node in enumerate(nodes):
-        print(f"\nNODE {i + 1}")
-        print(node.text[:1000])
-    print("=" * 60 + "\n")
-
     if not nodes:
-        return "Không tìm thấy thông tin này trong tài liệu."
+        return {
+            "answer": "Không tìm thấy thông tin này trong tài liệu.",
+            "sources": []
+        }
 
-    context = "\n\n".join(
-        [node.text for node in nodes]
-    )
+    context = "\n\n".join([node.text for node in nodes])
 
     prompt = f"""
 Bạn là chatbot hỏi đáp tài liệu.
 
-Chỉ sử dụng phần NGỮ CẢNH bên dưới để trả lời.
-Không được tự suy đoán.
-Nếu ngữ cảnh không có câu trả lời, hãy trả lời:
-"Không tìm thấy thông tin này trong tài liệu."
+Chỉ sử dụng thông tin trong tài liệu để trả lời.
 
-Trả lời bằng tiếng Việt, rõ ràng, ngắn gọn.
+Quy tắc:
+- Trả lời trực tiếp câu hỏi.
+- Không nhắc tới từ "NGỮ CẢNH".
+- Không nói "Theo ngữ cảnh".
+- Trả lời tự nhiên bằng tiếng Việt.
+- Nếu không có thông tin thì trả lời:
+  "Không tìm thấy thông tin này trong tài liệu."
 
-NGỮ CẢNH:
+Tài liệu:
 {context}
 
-CÂU HỎI:
+Câu hỏi:
 {question}
-
-TRẢ LỜI:
 """
 
     response = Settings.llm.complete(prompt)
 
-    return str(response)
+    sources = []
+
+    for i, node in enumerate(nodes, start=1):
+        sources.append({
+            "index": i,
+            "score": float(node.score) if node.score else None,
+            "preview": node.text[:300]
+        })
+
+    return {
+        "answer": str(response),
+        "sources": sources
+    }
 
 
 def clear_vector_database():

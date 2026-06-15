@@ -15,11 +15,15 @@ def chat(request: ChatRequest):
     question = request.question.strip()
 
     if not question:
-        raise HTTPException(status_code=400, detail="Câu hỏi không được để trống")
+        raise HTTPException(
+            status_code=400,
+            detail="Câu hỏi không được để trống"
+        )
 
-    answer = ask_document(question)
+    result = ask_document(question)
 
     return {
         "question": question,
-        "answer": answer,
+        "answer": result["answer"],
+        "sources": result["sources"],
     }

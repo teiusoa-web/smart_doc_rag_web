@@ -11,4 +11,4 @@ COLLECTION_NAME = "smart_documents"
 EMBED_MODEL = "nomic-embed-text"
 LLM_MODEL = "llama3.2"
 
-SIMILARITY_TOP_K = 5
+SIMILARITY_TOP_K = 30
