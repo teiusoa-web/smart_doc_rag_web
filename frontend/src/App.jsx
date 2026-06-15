@@ -197,7 +197,7 @@ function App() {
                 <input
                   className="form-control mb-3"
                   type="file"
-                  accept=".pdf,.txt"
+                  accept=".pdf,.txt,.docx"
                   onChange={(e) => setSelectedFile(e.target.files[0])}
                 />
 

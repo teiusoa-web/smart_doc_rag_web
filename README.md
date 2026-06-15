@@ -207,7 +207,7 @@ http://127.0.0.1:5173
 ### Upload tài liệu
 
 ```text
-PDF / TXT
+PDF / TXT / DOCX
     │
     ▼
 Document Reader

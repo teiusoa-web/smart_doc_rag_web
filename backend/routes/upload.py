@@ -13,8 +13,11 @@ async def upload_document(file: UploadFile = File(...)):
 
     lower_name = file.filename.lower()
 
-    if not lower_name.endswith((".pdf", ".txt")):
-        raise HTTPException(status_code=400, detail="Chỉ hỗ trợ file PDF hoặc TXT")
+    if not lower_name.endswith((".pdf", ".txt", ".docx")):
+        raise HTTPException(
+            status_code=400,
+            detail="Chỉ hỗ trợ file PDF, TXT hoặc DOCX"
+        )
 
     saved_path = await save_upload_file(file)
     result = index_document(saved_path)

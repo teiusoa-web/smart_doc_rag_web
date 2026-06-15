@@ -7,6 +7,8 @@ import pdfplumber
 from pdf2image import convert_from_path
 from rapidocr_onnxruntime import RapidOCR
 
+from docx import Document as DocxDocument
+
 from llama_index.core import Settings, VectorStoreIndex, StorageContext
 from llama_index.core.schema import Document
 from llama_index.core.node_parser import SentenceSplitter
@@ -78,13 +80,29 @@ def read_document_text(file_path: Path) -> str:
         if is_good_text(text):
             return text
 
-        print("PDF extract bị rỗng/rác, chuyển sang OCR...")
+        print("PDF extract lỗi, chuyển OCR...")
         return read_pdf_with_ocr(file_path)
 
-    if suffix == ".txt":
+    elif suffix == ".docx":
+        return read_docx(file_path)
+
+    elif suffix == ".txt":
         return read_txt(file_path)
 
-    raise ValueError("Chỉ hỗ trợ file PDF hoặc TXT")
+    raise ValueError(
+        "Chỉ hỗ trợ PDF, DOCX và TXT"
+    )
+
+def read_docx(file_path: Path) -> str:
+    doc = DocxDocument(str(file_path))
+
+    paragraphs = []
+
+    for para in doc.paragraphs:
+        if para.text.strip():
+            paragraphs.append(para.text)
+
+    return "\n".join(paragraphs)
 
 def is_good_text(text: str) -> bool:
     if not text or len(text.strip()) < 50:
