@@ -6,6 +6,96 @@ import {
   deleteDocuments,
 } from "./api";
 
+function normalizeForMatch(text = "") {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function isNoAnswerContent(text = "") {
+  const normalized = normalizeForMatch(text);
+
+  return (
+    normalized.includes("khong tim thay") ||
+    normalized.includes("toi khong tim thay") ||
+    normalized.includes("khong co thong tin") ||
+    normalized.includes("khong du thong tin")
+  );
+}
+
+function SourceCitations({ sources, answer }) {
+  if (!sources || sources.length === 0 || isNoAnswerContent(answer)) {
+    return null;
+  }
+
+  return (
+    <details className="source-citations mt-3">
+      <summary>
+        <i className="bi bi-link-45deg me-1"></i>
+        Nguồn tham khảo ({sources.length})
+      </summary>
+
+      <div className="source-list">
+        {sources.map((source, sourceIndex) => {
+          const index = source.index || sourceIndex + 1;
+          const fileName = source.file_name || `Nguồn ${index}`;
+          const pageLabel = source.page ? `Trang ${source.page}` : "Đoạn liên quan";
+
+          return (
+            <div className="source-box" key={`${fileName}-${pageLabel}-${index}`}>
+              <div className="source-meta">
+                <span className="source-index">[{index}]</span>
+                <span className="source-title" title={fileName}>{fileName}</span>
+                <span className="source-page">{pageLabel}</span>
+              </div>
+              <div className="source-preview">{source.preview}</div>
+            </div>
+          );
+        })}
+      </div>
+    </details>
+  );
+}
+
+function SourceCitationsV2({ sources, answer }) {
+  if (!sources || sources.length === 0 || isNoAnswerContent(answer)) {
+    return null;
+  }
+
+  return (
+    <details className="source-citations mt-3">
+      <summary>
+        <i className="bi bi-link-45deg me-1"></i>
+        Nguồn tham khảo ({sources.length})
+      </summary>
+
+      <div className="source-list">
+        {sources.map((source, sourceIndex) => {
+          const index = source.index || sourceIndex + 1;
+          const fileName = source.file_name || `Nguồn ${index}`;
+          const pageLabel = source.page
+            ? `Trang ${source.page}`
+            : `Đoạn ${source.section || source.chunk_id || index}`;
+
+          return (
+            <div className="source-box" key={`${fileName}-${pageLabel}-${index}`}>
+              <div className="source-meta">
+                <span className="source-index">[{index}]</span>
+                <span className="source-title" title={fileName}>{fileName}</span>
+                <span className="source-page">{pageLabel}</span>
+              </div>
+              <div className="source-preview">{source.preview}</div>
+            </div>
+          );
+        })}
+      </div>
+    </details>
+  );
+}
+
 function App() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [documents, setDocuments] = useState([]);
@@ -289,18 +379,7 @@ function App() {
                         {message.role === "user" ? "Bạn" : "Bot"}
                       </div>
                       <div className="message-content">{message.content}
-                        {message.sources && message.sources.length > 0 && (
-                          <div className="mt-3">
-                            <div className="fw-bold small mb-2">Nguồn tham khảo:</div>
-
-                            {message.sources.map((source) => (
-                              <div className="source-box small mb-2" key={source.index}>
-                                <div className="fw-bold">Nguồn {source.index}</div>
-                                <div>{source.preview}</div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
+                        <SourceCitationsV2 sources={message.sources} answer={message.content} />
                       </div>
                     </div>
                   </div>
