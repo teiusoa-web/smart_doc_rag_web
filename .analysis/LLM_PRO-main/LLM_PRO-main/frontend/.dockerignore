@@ -1,9 +1,0 @@
-node_modules
-backend
-.git
-.DS_Store
-docker-compose.yml
-Dockerfile
-Dockerfile.backend
-Dockerfile.frontend
-*.pdf

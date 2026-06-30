@@ -1,13 +1,15 @@
 fastapi
 uvicorn[standard]
 python-multipart
+python-dotenv
 pypdf
 python-docx
 chromadb
 llama-index
 llama-index-vector-stores-chroma
-llama-index-embeddings-ollama
-llama-index-llms-ollama
+llama-index-embeddings-openai
+llama-index-llms-openai
+openai
 pdfplumber
 pdf2image
 pillow

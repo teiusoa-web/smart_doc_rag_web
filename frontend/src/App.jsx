@@ -111,7 +111,7 @@ function App() {
       {
         role: "bot",
         content:
-          "Xin chào! Hãy upload tài liệu PDF/TXT bên trái, sau đó đặt câu hỏi về tài liệu.",
+          "Xin chào! Hãy upload tài liệu PDF/TXT/DOCX bên trái, sau đó đặt câu hỏi về tài liệu.",
       },
     ];
   });
@@ -310,7 +310,7 @@ function App() {
                 </button>
 
                 <div className="small text-muted mt-3">
-                  Hỗ trợ PDF và TXT. Khi upload, backend sẽ đọc tài liệu,
+                  Hỗ trợ PDF, DOCX và TXT. Khi upload, backend sẽ đọc tài liệu,
                   tạo embedding bằng Ollama và lưu vector vào ChromaDB.
                 </div>
               </div>
@@ -376,7 +376,7 @@ function App() {
                         }`}
                     >
                       <div className="fw-bold mb-1">
-                        {message.role === "user" ? "Bạn" : "Bot"}
+                        {message.role === "user" ? "Bạn" : "Gelato"}
                       </div>
                       <div className="message-content">{message.content}
                         <SourceCitationsV2 sources={message.sources} answer={message.content} />

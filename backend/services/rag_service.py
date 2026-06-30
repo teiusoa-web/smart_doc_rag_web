@@ -9,8 +9,6 @@ from docx import Document as DocxDocument
 from llama_index.core import Settings, StorageContext, VectorStoreIndex
 from llama_index.core.node_parser import SentenceSplitter
 from llama_index.core.schema import Document
-from llama_index.embeddings.ollama import OllamaEmbedding
-from llama_index.llms.ollama import Ollama
 from llama_index.vector_stores.chroma import ChromaVectorStore
 from pdf2image import convert_from_path
 from rapidocr_onnxruntime import RapidOCR
@@ -22,6 +20,7 @@ from backend.config import (
     COLLECTION_NAME,
     EMBED_MODEL,
     LLM_MODEL,
+    MODEL_PROVIDER,
     PARENT_CHUNK_OVERLAP,
     PARENT_CHUNK_SIZE,
     SIMILARITY_TOP_K,
@@ -44,8 +43,28 @@ SOURCE_STOPWORDS = {
 
 
 def setup_llamaindex():
-    Settings.embed_model = OllamaEmbedding(model_name=EMBED_MODEL)
-    Settings.llm = Ollama(model=LLM_MODEL, request_timeout=180.0)
+    provider = MODEL_PROVIDER.lower().strip()
+
+    if provider == "ollama":
+        from llama_index.embeddings.ollama import OllamaEmbedding
+        from llama_index.llms.ollama import Ollama
+
+        Settings.embed_model = OllamaEmbedding(model_name=EMBED_MODEL)
+        Settings.llm = Ollama(model=LLM_MODEL, request_timeout=180.0)
+    elif provider == "openai":
+        from llama_index.embeddings.openai import OpenAIEmbedding
+        from llama_index.llms.openai import OpenAI
+
+        Settings.embed_model = OpenAIEmbedding(model_name=EMBED_MODEL)
+        Settings.llm = OpenAI(model=LLM_MODEL, request_timeout=180.0)
+    else:
+        # Fallback to OpenAI if the selected provider is not available.
+        from llama_index.embeddings.openai import OpenAIEmbedding
+        from llama_index.llms.openai import OpenAI
+
+        Settings.embed_model = OpenAIEmbedding(model_name=EMBED_MODEL)
+        Settings.llm = OpenAI(model=LLM_MODEL, request_timeout=180.0)
+
     Settings.text_splitter = SentenceSplitter(
         chunk_size=CHILD_CHUNK_SIZE,
         chunk_overlap=CHILD_CHUNK_OVERLAP,

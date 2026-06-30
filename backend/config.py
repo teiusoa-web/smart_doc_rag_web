@@ -1,4 +1,8 @@
+import os
 from pathlib import Path
+from dotenv import load_dotenv
+
+load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -8,8 +12,9 @@ CHROMA_DIR = DATA_DIR / "chroma_db"
 
 COLLECTION_NAME = "smart_documents"
 
-EMBED_MODEL = "nomic-embed-text"
-LLM_MODEL = "llama3.2"
+MODEL_PROVIDER = os.getenv("MODEL_PROVIDER", "ollama")  # options: openai, ollama
+EMBED_MODEL = os.getenv("EMBED_MODEL", "nomic-embed-text")
+LLM_MODEL = os.getenv("LLM_MODEL", "llama3.2")
 
 SIMILARITY_TOP_K = 6
 
